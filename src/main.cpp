@@ -7,6 +7,24 @@
 
 #define BACKLOG 10
 
+bool end(char *req,int pos){
+	if(pos<4){
+		return false;
+	}
+	if(req[pos-1]=='\n' && req[pos-2]=='\r' && req[pos-3]=='\n' && req[pos-4]=='\r'){
+		return true;
+	}
+	return false;
+}
+
+char *filled(char *req,char *buf,int &cap, int pos, int bpos){
+	if(pos+bpos>cap){
+		req = (char*)realloc(req,cap*2);
+		cap = cap*2;
+	}
+	return req;
+}
+
 int main(){
 	int sockfd;
 	struct sockaddr_storage their_addr; //sockaddr_storage is where the client info is stored
@@ -28,15 +46,24 @@ int main(){
 	while(true){
 		addr_size = sizeof(their_addr);
 		int newfd = accept(sockfd,(struct sockaddr*)&their_addr,&addr_size);
-		
-		char buf[1024];
-		int n = recv(newfd,buf,1022,0);
-		std::cout<<n<<std::endl;
-		buf[1023] = '\0';
-		for(int i=0;buf[i]!='\0';i++){
-			std::cout<<buf[i];
+		int buf_cap = 1024;
+		char buf[buf_cap];
+		int req_cap = 4096;
+		char *req = (char*)malloc(req_cap);
+		int pos=0; //tracks how much the req is filled.
+		while(end(req,pos)==false){
+			int bpos = recv(newfd,buf,buf_cap,0);// recv returns the amount of bytes entered, we can track the pos of buf using this
+			req = filled(req,buf,req_cap,pos,bpos);
+			memcpy(&req[pos],buf,bpos);
+			pos+=bpos;
+		}
+		for(int i=0;i<pos;i++){
+			std::cout<<req[i];
 		}
 
+		char *msg = "HTTP/1.0 200 OK \r\n\r\n <h1>Hello World!<h1>\0";
+		int len = strlen(msg);
+		int n = send(newfd,msg,len,0);
 	}
 	return 0;
 }
