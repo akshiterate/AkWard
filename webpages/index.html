@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>akshiterate — Projects</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── Header ─────────────────────────────────────── -->
+  <header>
+    <p class="terminal-line">
+      <span class="prompt">akshiterate</span><span class="path">:~</span><span class="cmd">$ ls ./projects</span>
+    </p>
+
+    <h1>akshiterate<span class="cursor"></span></h1>
+
+    <div class="tagline">
+      <span class="out-prefix">→ </span><strong>Systems programming.</strong> Machine learning. Creative tooling.<br>
+      <span class="out-prefix">→ </span>Building things that run close to the metal or learn from data.
+    </div>
+
+    <nav class="header-links">
+      <a href="https://github.com/akshiterate">github.com/akshiterate</a>
+      <a href="https://github.com/akshiterate?tab=repositories">all repositories</a>
+    </nav>
+  </header>
+
+  <!-- ── Projects ───────────────────────────────────── -->
+  <p class="section-label">Selected Projects</p>
+
+  <div class="projects">
+
+    <!-- Akvim -->
+    <article class="card">
+      <div class="card-header">
+        <span class="card-title">Akvim</span>
+        <span class="card-type">Terminal text editor</span>
+      </div>
+
+      <div class="card-desc">
+        <p>A lightweight text editor built from scratch in C++, using <code>termios</code> and raw
+        system calls to drive the terminal directly — no curses, no abstraction layers.</p>
+        <p>Implements file I/O, syntax-aware cursor movement, a status bar, message prompts,
+        and efficient text rendering with tab handling. A ground-up study in Unix system
+        programming, memory management, and terminal escape sequences.</p>
+      </div>
+
+      <div class="card-footer">
+        <div class="stack">
+          <span class="tag">C++</span>
+          <span class="tag">termios</span>
+          <span class="tag">Linux syscalls</span>
+        </div>
+        <a class="gh-link" href="https://github.com/akshiterate/Akvim">github.com/akshiterate/Akvim</a>
+      </div>
+    </article>
+
+    <!-- Strudel Code Generator -->
+    <article class="card">
+      <div class="card-header">
+        <span class="card-title">Strudel Code Generator</span>
+        <span class="card-type">Deep learning · Music generation</span>
+      </div>
+
+      <div class="card-desc">
+        <p>A deep learning system that generates musical patterns for the
+        <a href="https://strudel.cc">Strudel</a> live-coding environment.
+        Trained LSTM, BiLSTM, and Transformer models to learn sequence dependencies
+        and produce structured outputs.</p>
+        <p>Designed a custom masked-note prediction metric for evaluation — the BiLSTM
+        architecture came out on top.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-val">90.38%</span>
+          <span class="stat-lbl">BiLSTM accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">3</span>
+          <span class="stat-lbl">model architectures</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="stack">
+          <span class="tag">Python</span>
+          <span class="tag">LSTM</span>
+          <span class="tag">BiLSTM</span>
+          <span class="tag">Transformer</span>
+        </div>
+        <a class="gh-link" href="https://github.com/akshiterate/Strudel-Code-Generator">github.com/akshiterate/Strudel-Code-Generator</a>
+      </div>
+    </article>
+
+    <!-- RUL Turbofan -->
+    <article class="card">
+      <div class="card-header">
+        <span class="card-title">RUL of a Turbofan Engine</span>
+        <span class="card-type">Predictive maintenance · Time-series ML</span>
+      </div>
+
+      <div class="card-desc">
+        <p>Predicts Remaining Useful Life (RUL) of aircraft turbofan engines
+        using the NASA CMAPSS sensor dataset. Applied feature engineering and preprocessing
+        on time-series data, then trained Random Forest and XGBoost models to estimate
+        engine failure timelines.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-val">0.81</span>
+          <span class="stat-lbl">R² score</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">314</span>
+          <span class="stat-lbl">avg. error (cycles)</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="stack">
+          <span class="tag">Python</span>
+          <span class="tag">pandas</span>
+          <span class="tag">scikit-learn</span>
+          <span class="tag">XGBoost</span>
+        </div>
+        <a class="gh-link" href="https://github.com/akshiterate/RUL-of-a-Turbofan-engine">github.com/akshiterate/RUL-of-a-Turbofan-engine</a>
+      </div>
+    </article>
+
+    <!-- File Royale -->
+    <article class="card">
+      <div class="card-header">
+        <span class="card-title">File Royale</span>
+        <span class="card-type">Simulation engine</span>
+      </div>
+
+      <div class="card-desc">
+        <p>A Python simulation engine where files compete in a battle royale.
+        Models competitive interactions between filesystem objects, with rule-based
+        and randomized algorithms handling event resolution, elimination, and
+        progression across rounds.</p>
+        <p>Last file standing wins.</p>
+      </div>
+
+      <div class="card-footer">
+        <div class="stack">
+          <span class="tag">Python</span>
+          <span class="tag">simulation</span>
+          <span class="tag">algorithms</span>
+        </div>
+        <a class="gh-link" href="https://github.com/akshiterate/File-Royale">github.com/akshiterate/File-Royale</a>
+      </div>
+    </article>
+
+  </div><!-- /projects -->
+
+  <!-- ── Footer ─────────────────────────────────────── -->
+  <footer>
+    <p>akshiterate &nbsp;·&nbsp; <a href="https://github.com/akshiterate">github</a></p>
+    <p>made with html &amp; css &nbsp;·&nbsp; no javascript</p>
+  </footer>
+
+</div><!-- /page -->
+
+</body>
+</html>
