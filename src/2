@@ -6,8 +6,6 @@
 #include <netdb.h>
 #include <string>
 #include <fstream>
-#include <unistd.h>
-
 #define BACKLOG 10
 
 bool end(char *req,int pos){
@@ -63,32 +61,20 @@ int main(){
 		for(int i=0;i<pos;i++){
 			std::cout<<req[i];
 		}
-		char *first_space = strchr(req,' ');
-		char * sec_space = strchr(first_space+1,' ');
-		int plen = sec_space-first_space-1;
-		char path[256];
-		memcpy(path,first_space+1,plen);
-		path[plen] = '\0';
-		std::string filepath;
-		if(strcmp(path,"/")==0){
-			filepath = "../webpages/index.html";
-		}else{
-			filepath = "../webpages"+std::string(path);
-		}
-		std::ifstream file(filepath);
+	
+		std::ifstream file("../webpages/index.html");
 		std::string line,contents;
 		if(file){
-			while(getline(file,line)){
+			while(getline(file,line){
 				contents+=line;
 				contents+='\n';
 			}
 		}
-		else std::cout<<"PATH NOT FOUND\n";
+		else std::cout<<"failed\n";
 
 		std::string msg = "HTTP/1.0 200 OK \r\n\r\n"+contents;
 		int len = msg.size();
 		int n = send(newfd,msg.c_str(),len,0);
-		close(newfd);
 	}
 	return 0;
 }
