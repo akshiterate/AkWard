@@ -62,6 +62,7 @@ std::string build_response(char *req){
 		filepath = "../webpages/index.html";
 	}else filepath = "../webpages"+std::string(path);
 	std::ifstream file(filepath);
+	bool found = true;
 	std::string line,contents;
 	if(file){
 		while(getline(file,line)){
@@ -69,10 +70,20 @@ std::string build_response(char *req){
 			contents+='\n';
 		}
 		
-	}else std::cout<<"PATH NOT FOUND";
-
-	
-	std::string msg = "HTTP/1.0 200 OK \r\n\r\n"+contents;
+	}else {
+		found = false;
+		filepath = "../webpages/404.html";
+		std::ifstream file(filepath);
+		while(getline(file,line)){
+			contents+=line;
+			contents+='\n';
+		}
+	}
+	std::string msg;
+	if(found) msg = "HTTP/1.0 200 OK \r\n\r\n"+contents;
+	else{
+		msg = "HTTP/1.0 404 Not Found\r\n\r\n"+contents;
+	}
 	return msg;
 }
 //recieving functions
