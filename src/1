@@ -10,7 +10,6 @@
 #include <ctime>
 //definitions
 #define BACKLOG 10
-#define MAX_REQ_SIZE 8192
 
 void server_log(std::string msg);
 int setup_server(){
@@ -50,23 +49,8 @@ int setup_server(){
 	return sockfd;
 }
 
-//reponse building
-bool ends_with(const std::string &str,const std::string &suf){
-	if(str.size()<suf.size()) return false;
-	return str.compare(str.size()-suf.size(),suf.size(),suf)==0;
-}
-std::string get_content_type(std::string &filepath){//new c++ feature discovered: you can reference variables using '&' when its used in a function
-	if(ends_with(filepath,".html")) return "text/html";
-	if(ends_with(filepath,".css")) return "text/css";
-	if(ends_with(filepath,".png")) return "image/png";
-	if(ends_with(filepath,".jpeg")) return "image/jpg";
-	if(ends_with(filepath,".gif")) return "image/gif";
-	return "application/octet-stream";
-}
+
 std::string build_response(char *req){
-	if(strncmp(req,"GET ",4)!=0){
-		return "HTTP/1.0 405 Method Not Allowed\r\n\r\n";
-	}
 	char *first_space = strchr(req,' ');//find the 1st ' ' in req
 	char * sec_space = strchr(first_space+1,' '); // since strchr works with pointers req is just the 1st element(char) and if we give first_space now the char array starts from there
 	int plen = sec_space-first_space-1;
@@ -78,46 +62,28 @@ std::string build_response(char *req){
 		filepath = "../webpages/index.html";
 	}else filepath = "../webpages"+std::string(path);
 	server_log("GET "+filepath);
-	std::ifstream file(filepath,std::ios::binary);//we need to open the file in binary mode, this prevents conversion of images to text which allows the support of images on the server
+	std::ifstream file(filepath);
 	bool found = true;
-	bool bad = false;
-	std::string contents;
+	std::string line,contents;
 	if(file){
-		if(strstr(path,"..")){
-			bad = true;
-			filepath = "../webpages/403.html";
-			std::ifstream file(filepath,std::ios::binary);
-			file.seekg(0,std::ios::end);//move the read pointer to the end of the file
-			size_t size = file.tellg();// tellg returns current position of read pointer, since we are at the end we get the size.
-			file.seekg(0);//moves read pointer back to 0;
-			contents.resize(size);
-			file.read(contents.data(),size);// data.data() gives you a pointer to internal memory of a vector/string
-		}
-		else{
-			file.seekg(0,std::ios::end);
-			size_t size = file.tellg();
-			file.seekg(0);
-			contents.resize(size);
-			file.read(contents.data(),size);
+		while(getline(file,line)){
+			contents+=line;
+			contents+='\n';
 		}
 		
 	}else {
 		found = false;
 		filepath = "../webpages/404.html";
-		std::ifstream file(filepath,std::ios::binary);
-		file.seekg(0,std::ios::end);
-		size_t size = file.tellg();
-		file.seekg(0);
-		contents.resize(size);
-		file.read(contents.data(),size);
+		std::ifstream file(filepath);
+		while(getline(file,line)){
+			contents+=line;
+			contents+='\n';
+		}
 	}
 	std::string msg;
-	std::string content_type = get_content_type(filepath);
-	std::string cache_con = "Cache-Control: no-cache, no-store, must-revalidate Pragma: no-cache Expires: 0";
-	if(bad) msg = "HTTP/1.0 403 Forbidden Content-Type: "+cache_con+content_type+"\r\n\r\n"+contents;
-	else if(found) msg = "HTTP/1.0 200 OK Content-Type: "+cache_con+content_type+"\r\n\r\n"+contents;
+	if(found) msg = "HTTP/1.0 200 OK \r\n\r\n"+contents;
 	else{
-		msg = "HTTP/1.0 404 Not Found Content-Type: "+cache_con + content_type+"\r\n\r\n"+contents;
+		msg = "HTTP/1.0 404 Not Found\r\n\r\n"+contents;
 	}
 	return msg;
 }
@@ -156,10 +122,6 @@ char *recieve_req(int client){
 		req = filled(req,buf,req_cap,pos,bpos);
 		memcpy(&req[pos],buf,bpos);
 		pos+=bpos;
-		if(pos> MAX_REQ_SIZE){
-			free(req);
-			return nullptr;
-		}
 	}
 	return req;
 }
@@ -173,8 +135,8 @@ void server_log(std::string msg){
 	}
 	time_t now = time(nullptr);
 	char* time_str = ctime(&now);
-	time_str[strlen(time_str)-1] = '\0';
-	logfile<<time_str<<": "<<msg<<std::endl;
+	time_str[strlen(time_str-1] = '\0';
+	logfile<<time_str<<":"<<msg<<std::endl;
 }
 
 int main(){
