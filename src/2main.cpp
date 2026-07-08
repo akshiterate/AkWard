@@ -8,8 +8,6 @@
 #include <fstream>
 #include <unistd.h>
 #include <ctime>
-#include <unordered_map>
-#include "metrics.hpp"
 
 //definitions
 #define BACKLOG 10
@@ -67,14 +65,8 @@ std::string get_content_type(std::string &filepath){//new c++ feature discovered
 	return "application/octet-stream";
 }
 std::string build_response(char *req){
-	std::unordered_map<int,std::string> status = {
-		{405,"HTTP/1.0 405 Method Not Allowed\r\n"},
-		{404,"HTTP/1.0 404 Not Found\r\n"},
-		{403,"HTTP/1.0 403 Forbidden\r\n"},
-		{200,"HTTP/1.0 200 OK\r\n"},
-	};
 	if(strncmp(req,"GET ",4)!=0){
-		return status[405]+"\r\n";
+		return "HTTP/1.0 405 Method Not Allowed\r\n\r\n";
 	}
 	char *first_space = strchr(req,' ');//find the 1st ' ' in req
 	char * sec_space = strchr(first_space+1,' '); // since strchr works with pointers req is just the 1st element(char) and if we give first_space now the char array starts from there
@@ -121,13 +113,12 @@ std::string build_response(char *req){
 		file.read(contents.data(),size);
 	}
 	std::string msg;
-	std::string contentType = "Content-Type: " + get_content_type(filepath)+"\r\n";
-	std::string cacheCon = "Cache-Control: no-cache, no-store, must-irevalidate\r\nPragma: no-cache\r\nExpires: 0\r\n";
-	std::string conLength = "Content-Length: "+std::to_string(contents.size())+"\r\n";
-	if(bad) msg = status[403]+cacheCon+contentType+"\r\n"+contents;
-	else if(found) msg = status[200]+cacheCon+contentType+conLength+"\r\n"+contents;
+	std::string content_type = get_content_type(filepath);
+	std::string cache_con = "Cache-Control: no-cache, no-store, must-irevalidate\r\nPragma: no-cache\r\nExpires: 0";
+	if(bad) msg = "HTTP/1.0 403 Forbidden Content-Type: "+cache_con+content_type+"\r\n\r\n"+contents;
+	else if(found) msg = "HTTP/1.0 200 OK\r\n"+cache_con+"\r\nContent-Type: "+content_type+"\r\nContent-Length: "+std::to_string(contents.size())+"\r\n\r\n"+contents;
 	else{
-		msg = status[404]+cacheCon+contentType+conLength+"\r\n"+contents;
+		msg = "HTTP/1.0 404 Not Found Content-Type: "+cache_con + content_type+"\r\n\r\n"+contents;
 	}
 	return msg;
 }
@@ -204,8 +195,6 @@ int main(){
 		int len = msg.size();
 		int n = send(newfd,msg.c_str(),len,0);
 		close(newfd);
-		std::cout<<get_total_requests()<<std::endl;
-		increment_requests();
 	}
 	return 0;
 
