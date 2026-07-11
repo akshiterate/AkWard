@@ -81,14 +81,6 @@ g++ *.cpp -o akward
 - Configuration file
 - Virtual hosts
 
-## Why?
-
-I wanted to understand how web servers actually work instead of treating them like a black box.
-
-This project started as a simple socket server and gradually grew into something that serves static websites, exposes a monitoring API, tracks its own performance, and powers my personal website.
-
-The goal isn't to compete with nginx or Apache. It's to learn how those kinds of systems are built.
-
 ## License
 
 MIT
