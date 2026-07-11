@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <cstring>
 #include <cstddef>
 #include <netdb.h>
@@ -9,6 +10,8 @@
 #include <unistd.h>
 #include <ctime>
 #include <unordered_map>
+#include <vector>
+#include <csignal>
 #include "metrics.hpp"
 
 //definitions
@@ -74,6 +77,7 @@ std::string build_response(char *req){
 		{200,"HTTP/1.0 200 OK\r\n"},
 	};
 	if(strncmp(req,"GET ",4)!=0){
+		increment_status(405);
 		return status[405]+"\r\n";
 	}
 	char *first_space = strchr(req,' ');//find the 1st ' ' in req
@@ -82,11 +86,18 @@ std::string build_response(char *req){
 	char path[256];
 	memcpy(path,first_space+1,plen);
 	path[plen] = '\0';
+	if(strcmp(path,"/api/metrics")==0){
+		std::string contents = metrics_to_json();
+		std::string contentType = "Content-Type: application/json\r\n";
+		std::string cacheCon = "Cache-Control: no-cache, no-store, must-irevalidate\r\nPragma: no-cache\r\nExpires: 0\r\n";
+		std::string conLength = "Content-Length: "+std::to_string(contents.size())+"\r\n";
+		return status[200]+contentType+cacheCon+conLength+"\r\n"+contents;
+	}
 	std::string filepath;
 	if(strcmp(path,"/")==0){
 		filepath = "../webpages/index.html";
 	}else filepath = "../webpages"+std::string(path);
-	server_log("GET "+filepath);
+	server_log("GET "+filepath);	
 	std::ifstream file(filepath,std::ios::binary);//we need to open the file in binary mode, this prevents conversion of images to text which allows the support of images on the server
 	bool found = true;
 	bool bad = false;
@@ -101,13 +112,16 @@ std::string build_response(char *req){
 			file.seekg(0);//moves read pointer back to 0;
 			contents.resize(size);
 			file.read(contents.data(),size);// data.data() gives you a pointer to internal memory of a vector/string
+		add_bytes(size);
 		}
 		else{
+			increment_status(200);
 			file.seekg(0,std::ios::end);
 			size_t size = file.tellg();
 			file.seekg(0);
 			contents.resize(size);
 			file.read(contents.data(),size);
+			add_bytes(size);
 		}
 		
 	}else {
@@ -119,14 +133,20 @@ std::string build_response(char *req){
 		file.seekg(0);
 		contents.resize(size);
 		file.read(contents.data(),size);
+		add_bytes(size);
 	}
 	std::string msg;
 	std::string contentType = "Content-Type: " + get_content_type(filepath)+"\r\n";
 	std::string cacheCon = "Cache-Control: no-cache, no-store, must-irevalidate\r\nPragma: no-cache\r\nExpires: 0\r\n";
 	std::string conLength = "Content-Length: "+std::to_string(contents.size())+"\r\n";
-	if(bad) msg = status[403]+cacheCon+contentType+"\r\n"+contents;
-	else if(found) msg = status[200]+cacheCon+contentType+conLength+"\r\n"+contents;
-	else{
+	if(bad){
+		msg = status[403]+cacheCon+contentType+"\r\n"+contents;
+		increment_status(403);
+	}
+	else if(found) 
+		msg = status[200]+cacheCon+contentType+conLength+"\r\n"+contents;
+	else{ 
+		increment_status(404);
 		msg = status[404]+cacheCon+contentType+conLength+"\r\n"+contents;
 	}
 	return msg;
@@ -174,8 +194,32 @@ char *recieve_req(int client){
 	return req;
 }
 
+//logging 
+int log_count = 0;
+void count_logs(){
+	std::ifstream file("../logs/server.log");
+	std::string line;
+	while(std::getline(file,line))
+		log_count+=1;
+	file.close();
+}
+void del_logs(){
+	std::ifstream file("../logs/server.log");
+	std::string line;
+	std::vector<std::string> lines;
+	while(getline(file,line))
+		lines.push_back(line);
+	file.close();
+	std::ofstream ofile("../logs/server.log");
+	for(int i=1000;i<lines.size();i++)
+		ofile<<lines[i]<<'\n';
+}
 
 void server_log(std::string msg){
+	if(log_count>=2000){
+		del_logs();
+		log_count == 1000;
+	}
 	std::ofstream logfile("../logs/server.log",std::ios::app);//"std::ios::app" means open the app in append mode i.e. dont re write over the file but append to it
 	if(!logfile){
 		std::cerr<<"Failed to open log file\n";
@@ -187,8 +231,17 @@ void server_log(std::string msg){
 	logfile<<time_str<<": "<<msg<<std::endl;
 }
 
+//handle ctrl+c inturruption
+void handle_sigint(int signum){
+	save_metrics();
+	exit(0);
+}
+
 int main(){
+	load_metrics();
+	signal(SIGINT,handle_sigint);
 	int sockfd = setup_server();
+	count_logs();
 	while(true){
 		struct sockaddr_storage their_addr;//sockaddr_storage is where the client info is stored
 		socklen_t addr_size = sizeof(their_addr);
@@ -204,7 +257,6 @@ int main(){
 		int len = msg.size();
 		int n = send(newfd,msg.c_str(),len,0);
 		close(newfd);
-		std::cout<<get_total_requests()<<std::endl;
 		increment_requests();
 	}
 	return 0;
