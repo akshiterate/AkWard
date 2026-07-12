@@ -1,6 +1,6 @@
-# AkWard
+# GLaSS - General Linux and Server System
 
-AkWard is a lightweight HTTP web server written from scratch in C++ using POSIX sockets on Linux.
+GLaSS is a lightweight HTTP web server written from scratch in C++ using POSIX sockets on Linux.
 
 No frameworks. No networking libraries. Just sockets, the standard library and a lot of trial and error.
 
