@@ -74,16 +74,30 @@ std::string build_response(char *req){
 		{405,"HTTP/1.0 405 Method Not Allowed\r\n"},
 		{404,"HTTP/1.0 404 Not Found\r\n"},
 		{403,"HTTP/1.0 403 Forbidden\r\n"},
+		{400,"HTTP/1.0 400 Bad Request\r\n"},
 		{200,"HTTP/1.0 200 OK\r\n"},
 	};
+	if(req == nullptr){
+		return status[404]+"\r\n";
+	}
+
 	if(strncmp(req,"GET ",4)!=0){
 		increment_status(405);
 		return status[405]+"\r\n";
 	}
 	char *first_space = strchr(req,' ');//find the 1st ' ' in req
+	if(first_space == nullptr){
+		return status[400]+"\r\n";
+	}
 	char * sec_space = strchr(first_space+1,' '); // since strchr works with pointers req is just the 1st element(char) and if we give first_space now the char array starts from there
+	if(sec_space == nullptr){
+		return status[400]+"\r\n";
+	}
 	int plen = sec_space-first_space-1;
 	char path[256];
+	if(plen >= sizeof(path)){
+		return status[400]+"\r\n";
+	}
 	memcpy(path,first_space+1,plen);
 	path[plen] = '\0';
 	if(strcmp(path,"/api/metrics")==0){
@@ -153,7 +167,7 @@ std::string build_response(char *req){
 }
 //recieving functions
 char* filled(char *req,char *buf,int &cap,int pos,int bpos){
-	if(pos+bpos>cap){
+	if(pos+bpos+1>cap){
 		cap *=2;
 		char* temp = (char*)realloc(req,cap);//never assume realloc works
 		if(temp == nullptr){
@@ -182,10 +196,16 @@ char *recieve_req(int client){
 			free(req);
 			return nullptr;
 		}
-		else if(bpos == 0) return nullptr;
+		else if(bpos == 0){
+			free(req);
+			return nullptr;
+		}
 		req = filled(req,buf,req_cap,pos,bpos);
+		if(req==nullptr)
+			return nullptr;
 		memcpy(&req[pos],buf,bpos);
 		pos+=bpos;
+		req[pos] = '\0';
 		if(pos> MAX_REQ_SIZE){
 			free(req);
 			return nullptr;
@@ -199,6 +219,7 @@ int log_count = 0;
 void count_logs(){
 	std::ifstream file("../logs/server.log");
 	std::string line;
+	log_count = 0;
 	while(std::getline(file,line))
 		log_count+=1;
 	file.close();
@@ -218,7 +239,7 @@ void del_logs(){
 void server_log(std::string msg){
 	if(log_count>=2000){
 		del_logs();
-		log_count == 1000;
+		log_count = 1000;
 	}
 	std::ofstream logfile("../logs/server.log",std::ios::app);//"std::ios::app" means open the app in append mode i.e. dont re write over the file but append to it
 	if(!logfile){
@@ -229,6 +250,7 @@ void server_log(std::string msg){
 	char* time_str = ctime(&now);
 	time_str[strlen(time_str)-1] = '\0';
 	logfile<<time_str<<": "<<msg<<std::endl;
+	log_count++;
 }
 
 //handle ctrl+c inturruption
