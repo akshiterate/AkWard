@@ -103,7 +103,7 @@ std::string build_response(char *req){
 	if(strcmp(path,"/api/metrics")==0){
 		std::string contents = metrics_to_json();
 		std::string contentType = "Content-Type: application/json\r\n";
-		std::string cacheCon = "Cache-Control: no-cache, no-store, must-irevalidate\r\nPragma: no-cache\r\nExpires: 0\r\n";
+		std::string cacheCon = "Cache-Control: no-cache, no-store, must-revalidate\r\nPragma: no-cache\r\nExpires: 0\r\n";
 		std::string conLength = "Content-Length: "+std::to_string(contents.size())+"\r\n";
 		return status[200]+contentType+cacheCon+conLength+"\r\n"+contents;
 	}
